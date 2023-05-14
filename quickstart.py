@@ -6,7 +6,8 @@ from oauth2client import client, file, tools
 from GroupQuestion import GroupQuestion
 
 def makeForm():
-    files = ["WayistSurveyQuestionnaire.txt"]
+    # files = ["Wayist Survey Questionnaire.txt", "FIG (Teachers) Survey Questionnaire.txt", "FIG (Students) Survey Questionnaire.txt"]
+    files = ["FIG (Teachers) Survey Questionnaire.txt"]
     SCOPES = "https://www.googleapis.com/auth/forms.body"
     DISCOVERY_DOC = "https://forms.googleapis.com/$discovery/rest?version=v1"
 
@@ -16,31 +17,30 @@ def makeForm():
         flow = client.flow_from_clientsecrets('credentials.json', SCOPES)
         creds = tools.run_flow(flow, store)
 
-    form_service = discovery.build('forms', 'v1', http=creds.authorize(
-        Http()), discoveryServiceUrl=DISCOVERY_DOC, static_discovery=False)
-
-    # Request body for creating a form
-    NEW_FORM = {
-        "info": {
-            "title": "Project Discipleship Survey",
-        }
-    }
-
-    # Creates the initial form
-    result = form_service.forms().create(body=NEW_FORM).execute()
-    print("Form created with id", result["formId"])
-
     for txtFile in files:
+        form_service = discovery.build('forms', 'v1', http=creds.authorize(
+        Http()), discoveryServiceUrl=DISCOVERY_DOC, static_discovery=False)
+            # Request body for creating a form
+        NEW_FORM = {
+            "info": {
+                "title": "Project Discipleship Survey",
+            }
+        }
+
+        # Creates the initial form
+        result = form_service.forms().create(body=NEW_FORM).execute()
+        # print("Form created with id", result["formId"])
         f = open(txtFile, "r")
         lines = f.readlines()
         counter = 0
+        description = "Brothers and sisters, Discipleship and Nurture is a ministry arm of GCMC focusing on growing Christians throughout their faith life span. The ministry is sounding out FIG, Fellowships (Jupu & Wayist), and Cell ministry. We desire your honest feedback on your experience in these areas. It will take you less than 30(?)minutes to provide this feedback. Your effort would contribute towards our work in the Kingdom of God."
         NEW_QUESTION = {
                 "requests": [
                 {
                     "updateFormInfo": {
                         "info": {
                             "title": "Project Discipleship survey",
-                            "description": f"Survey for {txtFile.replace('.txt', '')}",
+                            "description": txtFile[:-17] + "\n" + description,
                             "documentTitle": "GCMC",
                             },
                         "updateMask": "*"
@@ -67,10 +67,12 @@ def makeForm():
 
         question_setting = form_service.forms().batchUpdate(formId=result["formId"], body=NEW_QUESTION).execute()
         get_result = form_service.forms().get(formId=result["formId"]).execute()
-        print("Form created with uri:", get_result["responderUri"])
+        print(txtFile[:-17])
+        formId = get_result["formId"]
+        editUrl = f"https://docs.google.com/forms/d/{formId}/edit"
+        print(f"Form created. To edit: {editUrl}")
 
         f.close()
 
 makeForm()
 
-# id = "1wHAXgJj6tF3eXS-h8qvKk7ttWWAfL67Bzs9IP7CARPQ"
